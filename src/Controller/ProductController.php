@@ -5,15 +5,18 @@ namespace App\Controller;
 use App\Services\ProductServices;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 class ProductController extends AbstractController
 {
     public function __construct(
-        protected ProductServices $productServices
+        protected ProductServices $productServices,
+        protected RequestStack    $request
     )
     {
+        $this->productServices->setParams($this->request->getCurrentRequest()->request->all());
     }
 
     #[Route('/product', name: 'app_product', methods: 'get')]

@@ -12,11 +12,20 @@ class ProductServices
 {
     protected const DEFAULT_PULL_PARAM = 'set';
 
+    protected array $params;
+
     public function __construct(
-        protected RequestStack      $request,
         protected ProductRepository $repository,
         protected Serializer        $serializer)
     {
+    }
+
+    /**
+     * @param array $params
+     */
+    public function setParams(array $params): void
+    {
+        $this->params = $params;
     }
 
     public function find()
@@ -67,9 +76,7 @@ class ProductServices
      */
     private function getProduct(Product $product = new Product()): Product
     {
-        $params = $this->request->getCurrentRequest()->request->all();
-
-        foreach ($params as $param => $value) {
+        foreach ($this->params as $param => $value) {
             $key = $this->pullParam($param);
             try {
                 $product->{$key}($value);
@@ -104,10 +111,8 @@ class ProductServices
      */
     private function getParam(string $key)
     {
-        $params = $this->request->getCurrentRequest()->request->all();
-
-        return $params[$key] ??
-            throw new \Exception("Must specify the sku.");
+        return $this->params[$key] ??
+            throw new \Exception("Must specify the {$key}.");
     }
 
     /**

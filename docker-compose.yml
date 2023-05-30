@@ -4,7 +4,6 @@ services:
   db:
     container_name: db
     image: mysql:latest
-    restart: always
     environment:
       MYSQL_DATABASE: 'app_ecommerce_db'
       MYSQL_USER: 'bbdigital'
@@ -17,7 +16,7 @@ services:
     volumes:
       - app-db:/var/lib/mysql
     networks:
-      - app
+      - app-network
 
   php:
     container_name: php
@@ -30,7 +29,7 @@ services:
     depends_on:
       - db
     networks:
-      - app
+      - app-network
 
   nginx:
     container_name: nginx
@@ -44,10 +43,10 @@ services:
       - php
       - db
     networks:
-      - app
+      - app-network
 
 volumes:
   app-db:
 
 networks:
-  app:
+  app-network:
