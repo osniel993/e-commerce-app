@@ -20,8 +20,9 @@ class ProductController extends AbstractController
     }
 
     #[Route('/product', name: 'app_product', methods: 'get')]
-    public function index(): JsonResponse
+    public function list(): JsonResponse
     {
+        $this->productServices->setParams($this->request->getCurrentRequest()->query->all());
         return new JsonResponse($this->productServices->find());
     }
 
@@ -87,23 +88,25 @@ class ProductController extends AbstractController
         ]);
     }
 
-    #[Route('/product/outofstock', name: 'app_product_outofstock', methods: 'post')]
+    #[Route('/product/out-stock', name: 'app_product_outofstock', methods: 'post')]
     public function outofstock(): JsonResponse
     {
+        $this->productServices->setParams($this->request->getCurrentRequest()->query->all());
         return new JsonResponse([
             $this->productServices->outOfStock()
         ]);
     }
 
-    #[Route('/product/productssold', name: 'app_product_productssold')]
+    #[Route('/product/list-sold', name: 'app_product_productssold')]
     public function pullProductsSold(): JsonResponse
     {
+        $this->productServices->setParams($this->request->getCurrentRequest()->query->all());
         return new JsonResponse([
             $this->productServices->pullProductsSold()
         ]);
     }
 
-    #[Route('/product/totalprofit', name: 'app_product_totalprofit')]
+    #[Route('/product/total-profit', name: 'app_product_totalprofit')]
     public function pullTotalProfit(): JsonResponse
     {
         $status = 'success';

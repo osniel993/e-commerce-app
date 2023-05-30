@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\ProductRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ProductRepository::class)]
 class Product
@@ -21,6 +22,7 @@ class Product
     private ?string $name = null;
 
     #[ORM\Column]
+    #[Assert\GreaterThan(0)]
     private ?float $price = null;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -30,9 +32,11 @@ class Product
     private ?string $tags = "";
 
     #[ORM\Column]
+    #[Assert\GreaterThan(0)]
     private ?int $quantity_stock = 0;
 
     #[ORM\Column]
+    #[Assert\GreaterThan(0)]
     private ?int $quantity_sold = 0;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
@@ -42,6 +46,7 @@ class Product
     private ?string $more_info = "";
 
     #[ORM\Column(nullable: true)]
+    #[Assert\GreaterThanOrEqual(0)]
     private ?int $rating = 0;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]

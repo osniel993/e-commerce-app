@@ -4,8 +4,7 @@ namespace App\Services;
 
 use App\Entity\Product;
 use App\Repository\ProductRepository;
-use Symfony\Component\Config\Definition\Exception\Exception;
-use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 
 class ProductServices
@@ -13,10 +12,13 @@ class ProductServices
     protected const DEFAULT_PULL_PARAM = 'set';
 
     protected array $params;
+    protected int $page;
+    protected int $offset;
 
     public function __construct(
-        protected ProductRepository $repository,
-        protected Serializer        $serializer)
+        protected ProductRepository  $repository,
+        protected ValidatorInterface $validator,
+        protected Serializer         $serializer)
     {
     }
 
@@ -30,16 +32,15 @@ class ProductServices
 
     public function find()
     {
-//        $page = $this->request->getCurrentRequest()->get('page') ?? 1;
-//        $productList = $this->repository->findAll();
-//        $paginator = $this->paginator->paginate($productList, $page, 10);
-//
-//        return [
-//            'currentPageNumber' => $paginator->getCurrentPageNumber(),
-//            'numItemsPerPage' => $paginator->getItemNumberPerPage(),
-//            'totalCount' => $paginator->getTotalItemCount(),
-//            'items' => json_decode($this->serializer->serializer($paginator->getItems(), 'json')),
-//        ];
+        $this->pullOffset();
+        $productList = $this->repository->findBy($this->params, null, 10, $this->offset);
+
+        return [
+            'currentPageNumber' => $this->page,
+            'numItemsPerPage' => count($productList),
+            'totalCount' => $this->repository->count($this->params),
+            'items' => json_decode($this->serializer->serializer($productList, 'json')),
+        ];
     }
 
     /**
@@ -47,7 +48,9 @@ class ProductServices
      */
     public function add()
     {
-        $this->repository->save($this->getProduct(), true);
+        $product = $this->getProduct();
+
+        $this->repository->save($product, true);
     }
 
     /**
@@ -58,6 +61,7 @@ class ProductServices
         $sku = $this->getParam('sku');
         $product = $this->findOneProductBy(['sku' => $sku]);
         $product = $this->getProduct($product);
+
         $this->repository->save($product, true);
     }
 
@@ -68,6 +72,7 @@ class ProductServices
     {
         $sku = $this->getParam('sku');
         $product = $this->findOneProductBy(['sku' => $sku]);
+
         $this->repository->remove($product, true);
     }
 
@@ -81,8 +86,14 @@ class ProductServices
             try {
                 $product->{$key}($value);
             } catch (\Throwable $throwable) {
-                throw new Exception("{$param} field not allowed.");
+                throw new \Exception("{$param} field not allowed.");
             }
+        }
+
+        $errors = $this->validator->validate($product);
+
+        if (count($errors) > 0) {
+            throw new \Exception((string)$errors);
         }
 
         return $product;
@@ -135,37 +146,51 @@ class ProductServices
 
     public function outOfStock()
     {
-//        $page = $this->request->getCurrentRequest()->get('page') ?? 1;
-//        $productsOfStock = $this->repository->findBy(['quantity_stock' => 0]);
-//        $paginator = $this->paginator->paginate($productsOfStock, $page, 10);
-//
-//        return [
-//            'currentPageNumber' => $paginator->getCurrentPageNumber(),
-//            'numItemsPerPage' => $paginator->getItemNumberPerPage(),
-//            'totalCount' => $paginator->getTotalItemCount(),
-//            'items' => json_decode($this->serializer->serializer($paginator->getItems(), 'json')),
-//        ];
+        $this->pullOffset();
+        $productList = $this->repository->findBy(['quantity_stock' => 0], null, 10, $this->offset);
+
+        return [
+            'currentPageNumber' => $this->page,
+            'numItemsPerPage' => count($productList),
+            'totalCount' => $this->repository->count(['quantity_stock' => 0]),
+            'items' => json_decode($this->serializer->serializer($productList, 'json')),
+        ];
     }
 
     public function pullProductsSold()
     {
-//        $page = $this->request->getCurrentRequest()->get('page') ?? 1;
-//        $productsSold = $this->repository->createQueryBuilder('p')
-//            ->andWhere('p.quantity_sold > 0')
-//            ->getQuery()
-//            ->getResult();
-//        $paginator = $this->paginator->paginate($productsSold, $page, 10);
-//
-//        return [
-//            'currentPageNumber' => $paginator->getCurrentPageNumber(),
-//            'numItemsPerPage' => $paginator->getItemNumberPerPage(),
-//            'totalCount' => $paginator->getTotalItemCount(),
-//            'items' => json_decode($this->serializer->serializer($paginator->getItems(), 'json')),
-//        ];
+        $this->pullOffset();
+        $productList = $this->repository->createQueryBuilder('p')
+            ->andWhere('p.quantity_sold > 0')
+            ->setFirstResult($this->offset)
+            ->setMaxResults(10)
+            ->getQuery()
+            ->getResult();
+
+        $totalCountProductList = $this->repository->createQueryBuilder('p')
+            ->select("count(p.sku) as totalCount")
+            ->andWhere('p.quantity_sold > 0')
+            ->getQuery()
+            ->getResult();
+
+        return [
+            'currentPageNumber' => $this->page,
+            'numItemsPerPage' => count($productList),
+            'totalCount' => $totalCountProductList[0]['totalCount'],
+            'items' => json_decode($this->serializer->serializer($productList, 'json')),
+        ];
     }
 
     public function pullTotalProfit()
     {
         return $this->repository->pullTotalProfit()[0]['total_profit'];
+    }
+
+    private function pullOffset()
+    {
+        $this->page = $this->getParam('page');
+        unset($this->params['page']);
+
+        $this->offset = (($this->page - 1) * 10);
     }
 }

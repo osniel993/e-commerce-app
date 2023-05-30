@@ -65,28 +65,33 @@ class ProductFillCommand extends Command
 
         $productQuantity = $io->askQuestion(new Question("Quantity of products to be generated:", '100'));
 
-        $coutnProductName = count($this->productName)-1;
-        $countCategory = count($this->category)-1;
-        $countTag = count($this->tag)-1;
+        $coutnProductName = count($this->productName) - 1;
+        $countCategory = count($this->category) - 1;
+        $countTag = count($this->tag) - 1;
 
 
         for ($i = 0; $i < $productQuantity; $i++) {
-            $currentProductname = $this->productName[rand(0, $coutnProductName)] . " -{$i}-";
-            $product = [
-                "sku" => hash('crc32', $currentProductname),
-                "name" => $currentProductname,
-                "categories" => $this->category[rand(0, $countCategory)],
-                "tags" => $this->category[rand(0, $countTag)],
-                "price" => rand(100, 500),
-                "quantity_stock" => rand(0, 100),
-                "description" => $this->description,
-                "more_info" => $this->description,
-                "rating" => rand(0, 100),
-                "attached_img" => $this->attachedImg,
-                "quantity_sold" => rand(0, 100),
-            ];
-            $this->productServices->setParams($product);
-            $this->productServices->add();
+            try {
+                $currentProductname = $this->productName[rand(0, $coutnProductName)] . " -{$i}-";
+                $product = [
+                    "sku" => hash('crc32', $currentProductname),
+                    "name" => $currentProductname,
+                    "categories" => $this->category[rand(0, $countCategory)],
+                    "tags" => $this->category[rand(0, $countTag)],
+                    "price" => rand(100, 500),
+                    "quantity_stock" => rand(0, 100),
+                    "description" => $this->description,
+                    "more_info" => $this->description,
+                    "rating" => rand(0, 100),
+                    "attached_img" => $this->attachedImg,
+                    "quantity_sold" => rand(0, 100),
+                ];
+                $this->productServices->setParams($product);
+                $this->productServices->add();
+                $io->comment("Product with  sku [{$product['sku']}] created.");
+            } catch (\Throwable $th) {
+                $io->comment("Product with  sku [{$product['sku']}] not created.");
+            }
         }
         $io->success("You have {$productQuantity} new product.");
 
