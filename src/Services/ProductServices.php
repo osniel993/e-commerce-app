@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Entity\Product;
+use App\Exception\ApiException;
 use App\Repository\ProductRepository;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
@@ -43,9 +44,6 @@ class ProductServices
         ];
     }
 
-    /**
-     * @throws \Exception
-     */
     public function add()
     {
         $product = $this->getProduct();
@@ -53,9 +51,6 @@ class ProductServices
         $this->repository->save($product, true);
     }
 
-    /**
-     * @throws \Exception
-     */
     public function edit()
     {
         $sku = $this->getParam('sku');
@@ -65,9 +60,6 @@ class ProductServices
         $this->repository->save($product, true);
     }
 
-    /**
-     * @throws \Exception
-     */
     public function remove()
     {
         $sku = $this->getParam('sku');
@@ -76,29 +68,30 @@ class ProductServices
         $this->repository->remove($product, true);
     }
 
-    /**
-     * @throws \Exception
-     */
     private function getProduct(Product $product = new Product()): Product
     {
+        $errorList = [];
         foreach ($this->params as $param => $value) {
             $key = $this->pullParam($param);
             try {
                 $product->{$key}($value);
             } catch (\Throwable $throwable) {
-                throw new \Exception("{$param} field not allowed.");
+                $errorList[] = "{$param} field not allowed.";
             }
         }
 
         $errors = $this->validator->validate($product);
 
         if (count($errors) > 0) {
-            $errorList = [];
             foreach ($errors as $error) {
                 $errorList[] = "For attr {$error->getPropertyPath()}: {$error->getMessage()}";
             }
+        }
 
-            throw new \Exception($this->serializer->serializer($errorList,'json'),-1);
+        if (!empty($errors)) {
+            $error = new ApiException("The product must comply with the following requirements");
+            $error->setErrorList($errorList);
+            throw $error;
         }
 
         return $product;
@@ -113,34 +106,25 @@ class ProductServices
         return self::DEFAULT_PULL_PARAM . $param;
     }
 
-    /**
-     * @throws \Exception
-     */
-    private function findOneProductBy(array $param)
+    private function findOneProductBy(array $param): Product
     {
         return $this->repository->findOneBy($param) ??
-            throw new \Exception('Product not listed in the catalog');
+            throw new ApiException('Product not listed in the catalog');
     }
 
-    /**
-     * @throws \Exception
-     */
     private function getParam(string $key)
     {
         return $this->params[$key] ??
-            throw new \Exception("Must specify the {$key}.");
+            throw new ApiException("Must specify the {$key}.");
     }
 
-    /**
-     * @throws \Exception
-     */
-    public function sell()
+    public function sell(): void
     {
         $sku = $this->getParam('sku');
         $product = $this->findOneProductBy(['sku' => $sku]);
 
         if ($product->getQuantityStock() == 0) {
-            throw new \Exception("No hay produtos para vender");
+            throw new ApiException("No products to sell");
         }
 
         $product->setQuantitySold($product->getQuantitySold() + 1);
@@ -149,7 +133,7 @@ class ProductServices
         $this->repository->save($product, true);
     }
 
-    public function outOfStock()
+    public function outOfStock(): array
     {
         $this->pullOffset();
         $productList = $this->repository->findBy(['quantity_stock' => 0], null, 10, $this->offset);
@@ -162,7 +146,7 @@ class ProductServices
         ];
     }
 
-    public function pullProductsSold()
+    public function pullProductsSold(): array
     {
         $this->pullOffset();
         $productList = $this->repository->createQueryBuilder('p')
@@ -191,7 +175,7 @@ class ProductServices
         return $this->repository->pullTotalProfit()[0]['total_profit'];
     }
 
-    private function pullOffset()
+    private function pullOffset(): void
     {
         $this->page = $this->getParam('page');
         unset($this->params['page']);

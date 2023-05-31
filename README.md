@@ -24,7 +24,7 @@ dependencies individually.
 Download and install docker and run the following command:
 
 ```
-docker-compose up -d --build
+docker compose up -d --build
 ```
 
 After running it you can check that the app is working correctly
@@ -50,6 +50,8 @@ php bin/console doctrine:migrations:migrate
 ```
 
 ### ENV-Config
+
+Create a copy of .env.template and rename it to .env 
 
 It is necessary to specify the security phrase for the generation of JWT public and private keys:
 
@@ -167,3 +169,8 @@ Displays a paginated list based on 10 of the products that are not available in 
 
 So far we have tested how to run the app and main functions but for some operating systems, you may have problems 
 associated with the permissions of the application. Remember to apply the appropriate permissions according to OS.
+
+## Next MVP Aplication
+* Implement CRUD to handle categories and tags with their associated entities.
+* Allow search by similarity instead of just strict equality.
+* Improve handling exceptions.

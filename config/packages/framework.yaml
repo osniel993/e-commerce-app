@@ -18,6 +18,9 @@ framework:
     php_errors:
         log: true
 
+
+    error_controller: 'Symfony\Bundle\TwigBundle\Controller\ExceptionController::showException'
+
 when@test:
     framework:
         test: true

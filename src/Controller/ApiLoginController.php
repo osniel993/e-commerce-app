@@ -28,30 +28,27 @@ class ApiLoginController extends AbstractController
             "Welcome to e-commerce-app",
             "To get started visit the URL: https://github.com/osniel993/e-commerce-app "
         ];
-        return new JsonResponse($welcome,200);
+
+        return new JsonResponse($welcome);
     }
 
     #[Route('/login', name: 'app_login', methods: 'post')]
     public function login(Request $request): JsonResponse
     {
-        try {
-            $username = $request->server->get('PHP_AUTH_USER');
-            $password = $request->server->get('PHP_AUTH_PW');
+        $username = $request->server->get('PHP_AUTH_USER');
+        $password = $request->server->get('PHP_AUTH_PW');
 
-            $user = $this->repository->findOneBy(['username' => $username]);
+        $user = $this->repository->findOneBy(['username' => $username]);
 
-            if (!$user || !$this->passwordEncoder->isPasswordValid($user, $password)) {
-                return new JsonResponse('Invalid credentials', Response::HTTP_UNAUTHORIZED);
-            }
-
-            $token = $this->tokenManager->create($user);
-
-            return new JsonResponse([
-                'token' => $token,
-                'token_type' => "Bearer"
-            ]);
-        } catch (\Throwable $th) {
-            return new JsonResponse($th->getMessage(), 500);
+        if (!$user || !$this->passwordEncoder->isPasswordValid($user, $password)) {
+            return new JsonResponse('Invalid credentials', Response::HTTP_UNAUTHORIZED);
         }
+
+        $token = $this->tokenManager->create($user);
+
+        return new JsonResponse([
+            'token' => $token,
+            'token_type' => "Bearer"
+        ]);
     }
 }
