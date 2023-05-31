@@ -93,7 +93,12 @@ class ProductServices
         $errors = $this->validator->validate($product);
 
         if (count($errors) > 0) {
-            throw new \Exception((string)$errors);
+            $errorList = [];
+            foreach ($errors as $error) {
+                $errorList[] = "For attr {$error->getPropertyPath()}: {$error->getMessage()}";
+            }
+
+            throw new \Exception($this->serializer->serializer($errorList,'json'),-1);
         }
 
         return $product;

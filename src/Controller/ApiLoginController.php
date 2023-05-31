@@ -23,20 +23,24 @@ class ApiLoginController extends AbstractController
     #[Route('/login', name: 'app_login', methods: 'post')]
     public function login(Request $request): JsonResponse
     {
-        $username = $request->server->get('PHP_AUTH_USER');
-        $password = $request->server->get('PHP_AUTH_PW');
+        try {
+            $username = $request->server->get('PHP_AUTH_USER');
+            $password = $request->server->get('PHP_AUTH_PW');
 
-        $user = $this->repository->findOneBy(['username' => $username]);
+            $user = $this->repository->findOneBy(['username' => $username]);
 
-        if (!$user || !$this->passwordEncoder->isPasswordValid($user, $password)) {
-            return new JsonResponse('Invalid credentials', Response::HTTP_UNAUTHORIZED);
+            if (!$user || !$this->passwordEncoder->isPasswordValid($user, $password)) {
+                return new JsonResponse('Invalid credentials', Response::HTTP_UNAUTHORIZED);
+            }
+
+            $token = $this->tokenManager->create($user);
+
+            return new JsonResponse([
+                'token' => $token,
+                'token_type' => "Bearer"
+            ]);
+        } catch (\Throwable $th) {
+            return new JsonResponse($th->getMessage(), 500);
         }
-
-        $token = $this->tokenManager->create($user);
-
-        return new JsonResponse([
-            'token' => $token,
-            'token_type' => "Bearer"
-        ]);
     }
 }

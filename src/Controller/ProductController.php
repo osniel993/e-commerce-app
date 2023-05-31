@@ -11,6 +11,9 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 class ProductController extends AbstractController
 {
+
+    protected string $status = "success";
+
     public function __construct(
         protected ProductServices $productServices,
         protected RequestStack    $request
@@ -22,23 +25,30 @@ class ProductController extends AbstractController
     #[Route('/product', name: 'app_product', methods: 'get')]
     public function list(): JsonResponse
     {
-        $this->productServices->setParams($this->request->getCurrentRequest()->query->all());
-        return new JsonResponse($this->productServices->find());
+        try {
+            $this->productServices->setParams($this->request->getCurrentRequest()->query->all());
+            return new JsonResponse($this->productServices->find());
+        } catch (\Throwable $th) {
+            return new JsonResponse($th->getMessage(), 500);
+        }
     }
 
     #[Route('/product/add', name: 'app_product_add', methods: 'post')]
     #[IsGranted('ROLE_ADMIN')]
     public function add(): JsonResponse
     {
-        $status = 'success';
-        $msg = 'Product add';
+        try {
+            $this->productServices->add();
 
-        $this->productServices->add();
-
-        return new JsonResponse([
-            'status' => $status,
-            'msg' => $msg
-        ]);
+            return new JsonResponse([
+                'status' => $this->status,
+                'msg' => 'Product add'
+            ]);
+        } catch (\Throwable $th) {
+            $message = $th->getMessage();
+            $error = $th->getCode() == -1 ? json_decode($message) : $message;
+            return new JsonResponse($error, 500);
+        }
     }
 
     /**
@@ -48,58 +58,70 @@ class ProductController extends AbstractController
     #[IsGranted('ROLE_ADMIN')]
     public function edit(): JsonResponse
     {
-        $status = 'success';
-        $msg = 'Product edited';
+        try {
+            $this->productServices->edit();
 
-        $this->productServices->edit();
-
-        return new JsonResponse([
-            'status' => $status,
-            'msg' => $msg
-        ]);
+            return new JsonResponse([
+                'status' => $this->status,
+                'msg' => 'Product edited'
+            ]);
+        } catch (\Throwable $th) {
+            $message = $th->getMessage();
+            $error = $th->getCode() == -1 ? json_decode($message) : $message;
+            return new JsonResponse($error, 500);
+        }
     }
 
     #[Route('/product/remove', name: 'app_product_remove', methods: 'delete')]
     #[IsGranted('ROLE_ADMIN')]
     public function remove(): JsonResponse
     {
-        $status = 'success';
-        $msg = 'Product eliminado';
+        try {
+            $this->productServices->remove();
 
-        $this->productServices->remove();
-
-        return new JsonResponse([
-            'status' => $status,
-            'msg' => $msg
-        ]);
+            return new JsonResponse([
+                'status' => $this->status,
+                'msg' => 'Product removed'
+            ]);
+        } catch (\Throwable $th) {
+            return new JsonResponse($th->getMessage(), 500);
+        }
     }
 
     #[Route('/product/sell', name: 'app_product_sell', methods: 'post')]
     public function sell(): JsonResponse
     {
-        $status = 'success';
-        $msg = 'Product vendido';
+        try {
+            $this->productServices->sell();
 
-        $this->productServices->sell();
-
-        return new JsonResponse([
-            'status' => $status,
-            'msg' => $msg
-        ]);
+            return new JsonResponse([
+                'status' => $this->status
+            ]);
+        } catch (\Throwable $th) {
+            return new JsonResponse($th->getMessage(), 500);
+        }
     }
 
     #[Route('/product/out-stock', name: 'app_product_outofstock', methods: 'post')]
     public function outofstock(): JsonResponse
     {
-        $this->productServices->setParams($this->request->getCurrentRequest()->query->all());
-        return new JsonResponse([
-            $this->productServices->outOfStock()
-        ]);
+        try {
+            $this->productServices->setParams($this->request->getCurrentRequest()->query->all());
+            return new JsonResponse([
+                $this->productServices->outOfStock()
+            ]);
+        } catch (\Throwable $th) {
+            return new JsonResponse($th->getMessage(), 500);
+        }
     }
 
     #[Route('/product/list-sold', name: 'app_product_productssold')]
     public function pullProductsSold(): JsonResponse
     {
+        try {
+        } catch (\Throwable $th) {
+            return new JsonResponse($th->getMessage(), 500);
+        }
         $this->productServices->setParams($this->request->getCurrentRequest()->query->all());
         return new JsonResponse([
             $this->productServices->pullProductsSold()
@@ -109,11 +131,13 @@ class ProductController extends AbstractController
     #[Route('/product/total-profit', name: 'app_product_totalprofit')]
     public function pullTotalProfit(): JsonResponse
     {
-        $status = 'success';
-
-        return new JsonResponse([
-            'status' => $status,
-            'TotalProfit' => $this->productServices->pullTotalProfit()
-        ]);
+        try {
+            return new JsonResponse([
+                'status' => $this->status,
+                'TotalProfit' => $this->productServices->pullTotalProfit()
+            ]);
+        } catch (\Throwable $th) {
+            return new JsonResponse($th->getMessage(), 500);
+        }
     }
 }

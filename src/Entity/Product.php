@@ -16,13 +16,16 @@ class Product
     private ?int $id = null;
 
     #[ORM\Column(length: 255, unique: true)]
+    #[Assert\NotNull]
     private ?string $sku = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotNull]
     private ?string $name = null;
 
     #[ORM\Column]
     #[Assert\GreaterThan(0)]
+    #[Assert\NotNull]
     private ?float $price = null;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -32,11 +35,12 @@ class Product
     private ?string $tags = "";
 
     #[ORM\Column]
-    #[Assert\GreaterThan(0)]
+    #[Assert\GreaterThanOrEqual(0)]
+    #[Assert\NotNull]
     private ?int $quantity_stock = 0;
 
     #[ORM\Column]
-    #[Assert\GreaterThan(0)]
+    #[Assert\GreaterThanOrEqual(0)]
     private ?int $quantity_sold = 0;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
