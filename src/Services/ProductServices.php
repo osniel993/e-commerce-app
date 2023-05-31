@@ -7,7 +7,6 @@ use App\Exception\ApiException;
 use App\Repository\ProductRepository;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-
 class ProductServices
 {
     protected const DEFAULT_PULL_PARAM = 'set';
@@ -31,7 +30,7 @@ class ProductServices
         $this->params = $params;
     }
 
-    public function find()
+    public function find(): array
     {
         $this->pullOffset();
         $productList = $this->repository->findBy($this->params, null, 10, $this->offset);
@@ -44,14 +43,14 @@ class ProductServices
         ];
     }
 
-    public function add()
+    public function add(): void
     {
         $product = $this->getProduct();
 
         $this->repository->save($product, true);
     }
 
-    public function edit()
+    public function edit(): void
     {
         $sku = $this->getParam('sku');
         $product = $this->findOneProductBy(['sku' => $sku]);
@@ -60,7 +59,7 @@ class ProductServices
         $this->repository->save($product, true);
     }
 
-    public function remove()
+    public function remove(): void
     {
         $sku = $this->getParam('sku');
         $product = $this->findOneProductBy(['sku' => $sku]);

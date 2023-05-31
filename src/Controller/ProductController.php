@@ -2,9 +2,7 @@
 
 namespace App\Controller;
 
-use App\Exception\ApiException;
 use App\Services\ProductServices;
-use mysql_xdevapi\Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -56,11 +54,6 @@ class ProductController extends AbstractController
             'status' => $this->status,
             'msg' => 'Product edited'
         ]);
-//        } catch (\Throwable $th) {
-//            $message = $th->getMessage();
-//            $error = $th->getCode() == -1 ? json_decode($message) : $message;
-//            return new JsonResponse($error, 500);
-//        }
     }
 
     #[Route('/product/remove', name: 'app_product_remove', methods: 'delete')]

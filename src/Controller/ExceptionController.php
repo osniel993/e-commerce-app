@@ -1,5 +1,5 @@
 <?php
-// src/Controller/ExceptionController.php
+
 namespace App\Controller;
 
 use App\Exception\ApiException;
